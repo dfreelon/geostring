@@ -74,7 +74,7 @@ with the default delimiters, which include commas but not spaces, will interpret
 ```python 
 resolve(Geostring('southern California...',delimiters=[' ']))
 ```
-it will match "southern" and "California" separately, drop "southern" because it exceeds the threshold, and match only "California." You may want to set up rules governing which delimiters ```geostring``` uses based on the characteristics of each string in your dataset. For example you might choose to use spaces as delimiters only with strings that end in two- or three-letter sequences, e.g. "Cincinnati OH" or "Cape Town ZA". 
+it will look up "southern" and "California" separately, drop "southern" because it exceeds the threshold, and match only "California." You may want to set up rules governing which delimiters ```geostring``` uses based on the characteristics of each string in your dataset. For example you might choose to use spaces as delimiters only with strings that end in two- or three-letter sequences, e.g. "Cincinnati OH" or "Cape Town ZA". 
 
 The default delimiters are commas, semicolons, pipes, ampersands, the word "and" surrounded by a space on each side, forward slashes, and backslashes (see "Parameters" section below). 
 
