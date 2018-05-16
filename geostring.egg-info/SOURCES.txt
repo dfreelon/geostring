@@ -1,0 +1,11 @@
+MANIFEST.in
+setup.py
+geostring/__init__.py
+geostring/geostring.py
+geostring/world_nicknames.csv
+geostring/world_places.csv
+geostring.egg-info/PKG-INFO
+geostring.egg-info/SOURCES.txt
+geostring.egg-info/dependency_links.txt
+geostring.egg-info/requires.txt
+geostring.egg-info/top_level.txt
