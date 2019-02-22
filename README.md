@@ -113,7 +113,7 @@ Aside from its input, ```resolve``` possesses one additional parameter:
    - ```ed_best_match```: The edit distance of the match between ```geo_input_pp``` and ```geo_input_match```.
    - ```ed_tolerance```: The tolerance of the best edit distance, which is defined as ```ed_best_match```/```max(len(geo_input_pp),len(geo_input_match))```
 
-```resolve``` produces an OrderedDict dict containing three items:
+```resolve``` produces an OrderedDict containing three items:
 - ```resolved_city```: The most likely city name(s) based on the input string.
 - ```resolved_subcountry```: The most likely subcountry name(s).
 - ```resolved_country```: The most likely country name(s).
