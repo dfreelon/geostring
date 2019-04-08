@@ -27,6 +27,7 @@ System requirements
 -------------------
 - Python 3
 - [editdistance](https://github.com/aflc/editdistance)
+- [pandas](https://pandas.pydata.org/)
 - [unidecode](https://pypi.org/project/Unidecode/)
 
 Installation
@@ -36,43 +37,43 @@ pip install geostring
 ```
 Sample code
 -----------
-```geostring``` has two primary functions: ```Geostring``` (actually an object class, but it works like a function) and ```resolve```. The former can be used without the latter, but the converse is not true. Most people will probably want to use them together, but ```Geostring``` by itself can be useful for troubleshooting if you're not getting the results you expect. Here are a few sample statements for ```resolve``` + ```Geostring```:
+```geostring``` has two main user-facing functions: ```resolve``` and ```Geostring``` (which is actually an object class, but it works like a function). Most people will probably only want to use the former, but the latter can be helpful for fine-tuning and troubleshooting. Here are a few sample statements for ```resolve```:
 ```python
-from geostring import *
+import geostring as geo
 #cities, including (some) nicknames
-resolve(Geostring('nyc'))
-resolve(Geostring('omaha'))
-resolve(Geostring('brussels'))
+geo.resolve('nyc')
+geo.resolve('omaha')
+geo.resolve('brussels')
 #subcountries
-resolve(Geostring('north carolina'))
-resolve(Geostring('baja california'))
-resolve(Geostring('queensland'))
+geo.resolve('north carolina')
+geo.resolve('baja california')
+geo.resolve('queensland')
 #countries
-resolve(Geostring('kenya'))
-resolve(Geostring('mongolia'))
-resolve(Geostring('paraguay'))
+geo.resolve('kenya')
+geo.resolve('mongolia')
+geo.resolve('paraguay')
 #fictional places don't work too well
-resolve(Geostring('wakanda'))
-resolve(Geostring('westeros'))
-resolve(Geostring('narnia')) #but some will return false positives based on similarity to real place names!
+geo.resolve('wakanda')
+geo.resolve('westeros')
+geo.resolve('narnia') #but some will return false positives based on similarity to real place names!
 #compound locations
-resolve(Geostring('springfield, oh'))
-resolve(Geostring('athens, greece'))
-resolve(Geostring('san juan, pr'))
+geo.resolve('springfield, oh')
+geo.resolve('athens, greece')
+geo.resolve('san juan, pr')
 #and non-standard location references...
-resolve(Geostring('Brooklyn, baby!'))
-resolve(Geostring('VA/MD'))
-resolve(Geostring('southern California...')) #doesn't work--see below
+geo.resolve('Brooklyn, baby!')
+geo.resolve('VA/MD')
+geo.resolve('southern California...') #doesn't work--see below
 ```
 Delimiters
 ----------------------
 Probably the most important determinant of ```geostring```'s performance is the set of characters it treats as delimiters. Every substring separated by a delimiter will be matched separately to the place name database. For example, running
 ```python 
-resolve(Geostring('southern California...'))
+geo.resolve('southern California...')
 ``` 
 with the default delimiters, which include commas but not spaces, will interpret "southern California" as a single location and thus exceed the tolerance threshold. But if you set ```Geostring``` to use spaces as delimiters like so: 
 ```python 
-resolve(Geostring('southern California...',delimiters=[' ']))
+geo.resolve('southern California...',delimiters=[' '])
 ```
 it will look up "southern" and "California" separately, drop "southern" because it exceeds the threshold, and match only "California." You may want to set up rules governing which delimiters ```geostring``` uses based on the characteristics of each string in your dataset. For example you might choose to use spaces as delimiters only with strings that end in two- or three-letter sequences, e.g. "Cincinnati OH" or "Cape Town ZA". 
 
@@ -92,9 +93,10 @@ Aside from its input, ```Geostring``` objects possess the following parameters:
 - ```delimiters```: a list containing the delimiters used to preprocess the input string. By default it is ```[',',';','\|','&',' and ','/','\\\\']```
 - ```loc_index```: The location index used to match strings. This is generated automatically when ```geostring``` is imported.
 
-Aside from its input, ```resolve``` possesses one additional parameter:
+Aside from its input, ```resolve``` possesses two additional parameters:
 
 - ```max_tolerance```: The upper limit of the tolerance between the input string and its best match in the place name database. If the best match returns a tolerance equaling or exceeding this value, ```resolve``` will discard it.
+- ```verbose```: Displays additional info about your output.
 
 **Output**
 
