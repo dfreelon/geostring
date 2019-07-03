@@ -1,56 +1,101 @@
 import collections
-import csv
 import editdistance as ed
 import os
 import pandas as pd
 import re
 from unidecode import unidecode
+
+filename = __file__
         
 def get_geo_info(geo_input='',
                  re_sub='',
-                 loc_index=None):
-    geo_input_pp = re.sub(re_sub,'',unidecode(geo_input).lower().strip())
+                 loc_index=None,
+                 exact=False):
+    geo_input_pp = re.sub(re_sub,
+                          '',
+                          unidecode(geo_input).lower().strip())
     curr_match = (None,1000)
     
-    for i in loc_index:
-        ed_match = ed.eval(geo_input_pp,i)
-        if ed_match < curr_match[1]:
-            curr_match = (i,ed_match)
-    geodict = collections.OrderedDict(
-        {'geo_input':geo_input,
-        'geo_input_pp':geo_input_pp,
-        'geo_input_match':curr_match[0],
-        'geo_city':loc_index[curr_match[0]][0],
-        'geo_subcountry':loc_index[curr_match[0]][1],
-        'geo_country':loc_index[curr_match[0]][2],
-        'ed_best_match':curr_match[1],
-        'ed_tolerance':curr_match[1]/max([len(geo_input_pp),len(curr_match[0])])})
+    if exact == True:
+        if geo_input_pp in loc_index:
+            curr_match = (geo_input_pp,0)
+        else:
+            curr_match = (None,1)
+    else:
+        for i in loc_index:
+            ed_match = ed.eval(geo_input_pp,i)
+            if ed_match < curr_match[1]:
+                curr_match = (i,ed_match)
+    if curr_match[0] is not None:
+        geodict = collections.OrderedDict(
+            {'geo_input':geo_input,
+             'geo_input_pp':geo_input_pp,
+             'geo_input_match':curr_match[0],
+             'geo_city':loc_index[curr_match[0]][0],
+             'geo_subcountry':loc_index[curr_match[0]][1],
+             'geo_country':loc_index[curr_match[0]][2],
+             'ed_best_match':curr_match[1],
+             'ed_tolerance':curr_match[1]/max(len(geo_input_pp),
+                                              len(curr_match[0]))})
+    else:
+        geodict = collections.OrderedDict(
+            {'geo_input':geo_input,
+             'geo_input_pp':geo_input_pp,
+             'geo_input_match':None,
+             'geo_city':None,
+             'geo_subcountry':None,
+             'geo_country':None,
+             'ed_best_match':curr_match[1],
+             'ed_tolerance':1})
     return geodict
     
-def resolve(loc_string,max_tolerance=0.25,verbose=False):
-    geostring = Geostring(loc_string)
-    for i in geostring.results:
+def resolve(loc_string,
+            exact=False,
+            max_tolerance=0.25,
+            verbose=False):
+    if exact == True:
+        max_tolerance = 0
+    geostr = Geostring(loc_string,exact=exact)
+    for i in geostr.results:
         if i['ed_tolerance'] > max_tolerance:
             if verbose == True:
-                print('Tolerance between "' + i['geo_input'] + '" and "' + i['geo_input_match'] + '" (' + str(i['ed_tolerance']) + ') equals or exceeds max tolerance of',max_tolerance,'; removing...')
-    geostring.results = [i for i in geostring.results if i['ed_tolerance'] <= max_tolerance]
+                print('Tolerance between "' + 
+                      i['geo_input'] + 
+                      '" and "' + 
+                      i['geo_input_match'] + 
+                      '" (' + 
+                      str(i['ed_tolerance']) + 
+                      ') equals or exceeds max tolerance of',
+                      max_tolerance,
+                      '; removing...')
+    geostr.results = [i for i 
+                         in geostr.results 
+                         if i['ed_tolerance'] <= max_tolerance]
                 
-    if geostring.results == []:
+    if geostr.results == []:
         if verbose == True:
             print('No results, Geostring object empty...')
         return
     else:
-        resolved_location = collections.OrderedDict({'resolved_city':'','resolved_subcountry':'','resolved_country':''})
-        if len(geostring.results) == 1:
-            resolved_location['resolved_city'] = geostring.results[0]['geo_city']
-            resolved_location['resolved_subcountry'] = geostring.results[0]['geo_subcountry']
-            resolved_location['resolved_country'] = geostring.results[0]['geo_country']
+        resolved_location = collections.OrderedDict({'resolved_city':'',
+                         'resolved_subcountry':'',
+                         'resolved_country':''})
+        if len(geostr.results) == 1:
+            resolved_location['resolved_city'] = geostr.results[0]['geo_city']
+            resolved_location['resolved_subcountry'] = geostr.results[0]['geo_subcountry']
+            resolved_location['resolved_country'] = geostr.results[0]['geo_country']
             return resolved_location
         else:        
             all_locs = []
-            all_locs.append([i['geo_city'] for i in geostring.results])
-            all_locs.append([i['geo_subcountry'] for i in geostring.results])
-            all_locs.append([i['geo_country'] for i in geostring.results])
+            all_locs.append([i['geo_city'] 
+                             for i 
+                             in geostr.results])
+            all_locs.append([i['geo_subcountry'] 
+                             for i 
+                             in geostr.results])
+            all_locs.append([i['geo_country'] 
+                             for i 
+                             in geostr.results])
         # vertical resolution: match within corresponding fields
         for n,i in enumerate(all_locs):
             loc_list = []
@@ -79,7 +124,12 @@ def resolve(loc_string,max_tolerance=0.25,verbose=False):
                             for rl 
                             in resolved_location['resolved_subcountry'].split('?') 
                             if rl != '' 
-                            and rc in geostring.loc_index[re.sub(geostring.re_sub,'',unidecode(rl).lower().strip())][2]])
+                            and rc 
+                            in geostr.loc_index[
+                                         re.sub(
+                                            geostr.re_sub,
+                                            '',
+                                            unidecode(rl).lower().strip())][2]])
         resolved_location['resolved_subcountry'] = '?'.join(sorted(list(set(r2_subc))))
         
         r2_city = []
@@ -88,38 +138,82 @@ def resolve(loc_string,max_tolerance=0.25,verbose=False):
                             for rl 
                             in resolved_location['resolved_city'].split('?') 
                             if rl != '' 
-                            and rc in geostring.loc_index[re.sub(geostring.re_sub,'',unidecode(rl).lower().strip())][1]])
+                            and rc in geostr.loc_index[re.sub(geostr.re_sub,
+                           '',
+                           unidecode(rl).lower().strip())][1]])
         resolved_location['resolved_city'] = '?'.join(sorted(list(set(r2_city))))
         
         return resolved_location    
+
+def get_places(wd,colnum,level,list_out=True):
+    if list_out == True:
+        return [i 
+                for i 
+                in wd 
+                if any(c == i[colnum] 
+                       for c 
+                       in level)]
+    else:
+        return {i:wd[i]
+                for i
+                in wd
+                if any(c 
+                       in wd[i][colnum] 
+                       for c 
+                       in level)}
         
 def create_loc_index(world_data_fn='world_places.csv',
                      world_nick_fn='world_nicknames.csv',
-                     re_sub='[^a-z]'):
-    mod_path = os.path.dirname(os.path.abspath(__file__)) + '/'
-    world_data=pd.read_csv(mod_path + world_data_fn,
-                           keep_default_na=False,
-                           header=None).values.tolist()
-    city_index = {re.sub(re_sub,'',unidecode(i[0]).lower().strip()):['','',''] for i in world_data}
-    subc_index = {re.sub(re_sub,'',unidecode(i[2]).lower().strip()):['','',''] for i in world_data}
-    country_index = {re.sub(re_sub,'',unidecode(i[1]).lower().strip()):['','',''] for i in world_data}
+                     re_sub='[^a-z]',
+                     cities=None,
+                     subcountries=None,
+                     countries=None):
+    mod_path = os.path.dirname(os.path.abspath(filename)) + '/'
+    world_data1=pd.read_csv(mod_path + world_data_fn,
+                            keep_default_na=False,
+                            header=None).values.tolist()
+    for n,i in enumerate(world_data1):
+        for x,j in enumerate(i):
+            world_data1[n][x] = unidecode(j).lower().strip()
+            
+    world_data = []
+    
+    if type(countries) is list:
+        world_data.extend(
+                get_places(
+                        world_data1,1,countries))         
+    if type(subcountries) is list:
+        world_data.extend(
+                get_places(
+                        world_data1,2,subcountries))
+    if type(cities) is list:
+        world_data.extend( 
+                get_places(
+                        world_data1,0,cities))
+                           
+    if len(world_data) == 0:
+        world_data = world_data1
+        
+    city_index = {re.sub(re_sub,'',i[0]):['','',''] for i in world_data}
+    subc_index = {re.sub(re_sub,'',i[2]):['','',''] for i in world_data}
+    country_index = {re.sub(re_sub,'',i[1]):['','',''] for i in world_data}
     
     for i in world_data:
-        city = re.sub(re_sub,'',unidecode(i[0]).lower().strip())
-        subc = re.sub(re_sub,'',unidecode(i[2]).lower().strip())
-        country = re.sub(re_sub,'',unidecode(i[1]).lower().strip())
+        city = re.sub(re_sub,'',i[0])
+        subc = re.sub(re_sub,'',i[2])
+        country = re.sub(re_sub,'',i[1])
         
-        city_index[city][0] = i[0].lower()
-        city_index[city][1] += "?" + i[2].lower().strip()
-        city_index[city][2] += "?" + i[1].lower().strip()
+        city_index[city][0] = i[0]
+        city_index[city][1] += "?" + i[2]
+        city_index[city][2] += "?" + i[1]
         
         subc_index[subc][0] = ''
-        subc_index[subc][1] = i[2].lower()
-        subc_index[subc][2] += "?" + i[1].lower().strip()
+        subc_index[subc][1] = i[2]
+        subc_index[subc][2] += "?" + i[1]
         
         country_index[country][0] = ''
         country_index[country][1] = ''
-        country_index[country][2] = i[1].lower().strip()
+        country_index[country][2] = i[1]
            
     loc_index = {}
     loc_index.update(city_index)
@@ -129,8 +223,9 @@ def create_loc_index(world_data_fn='world_places.csv',
         loc_index[i][2] += "?" + subc_index[i][2]
     subc_city_nonmatches = {i:subc_index[i] for i in subc_index if i not in city_index}
     loc_index.update(subc_city_nonmatches)
-    loc_index.update(country_index) 
-    del loc_index['']
+    loc_index.update(country_index)
+    if '' in loc_index:
+        del loc_index['']
     
     for i in loc_index:
         if '?' in loc_index[i][1]:
@@ -142,18 +237,40 @@ def create_loc_index(world_data_fn='world_places.csv',
         if len(loc_index[i][2]) > 0 and loc_index[i][2][0] == '?':
             loc_index[i][2] = loc_index[i][2][1:]
 
-    loc_index['georgia'] = ['','georgia','georgia?united states']
     # add nickname data
     if world_nick_fn != '':
-        nickname_data = pd.read_csv(mod_path + world_nick_fn,
-                                    keep_default_na=False,
-                                    header=None).values.tolist()
-        nickname_index = {re.sub(re_sub,'',unidecode(i[0]).lower().strip()):['','',''] for i in nickname_data}
+        nickname_data1 = pd.read_csv(mod_path + world_nick_fn,
+                                     keep_default_na=False,
+                                     header=None).values.tolist()
+        for n,i in enumerate(nickname_data1):
+            for x,j in enumerate(i):
+                nickname_data1[n][x] = unidecode(j).lower().strip()
+                
+        nickname_data = []
+    
+        if type(countries) is list:
+            nickname_data.extend(
+                    get_places(
+                            nickname_data1,2,countries))         
+        if type(subcountries) is list:
+            nickname_data.extend(
+                    get_places(
+                            nickname_data1,3,subcountries))
+        if type(cities) is list:
+            nickname_data.extend( 
+                    get_places(
+                            nickname_data1,1,cities))
+                               
+        if len(nickname_data) == 0:
+            nickname_data = nickname_data1
+                
+        nickname_index = {re.sub(re_sub,'',i[0]):['','',''] 
+                          for i in nickname_data}
         for i in nickname_data:
-            nick = re.sub(re_sub,'',unidecode(i[0]).lower().strip())
-            nickname_index[nick][0] += "?" + i[1].lower().strip()
-            nickname_index[nick][1] += "?" + i[3].lower().strip()
-            nickname_index[nick][2] += "?" + i[2].lower().strip()
+            nick = re.sub(re_sub,'',i[0])
+            nickname_index[nick][0] += "?" + i[1]
+            nickname_index[nick][1] += "?" + i[3]
+            nickname_index[nick][2] += "?" + i[2]
             
         for i in nickname_index:
             for j in range(3):
@@ -165,13 +282,58 @@ def create_loc_index(world_data_fn='world_places.csv',
     loc_index.update(nickname_index)
     print('World index created.')
     return loc_index
+
+def subset_locations(cities=None,
+                     subcountries=None,
+                     countries=None):
+    base_li = create_loc_index(countries=countries,
+                               subcountries=subcountries,
+                               cities=cities)
+    modified_li = {}
+    if type(countries) is list:
+        modified_li.update(
+            get_places(
+                base_li,2,countries,False))
+    if type(subcountries) is list:
+        modified_li.update(
+            get_places(
+                base_li,1,subcountries,False))
+    if type(cities) is list:
+        modified_li.update(
+            get_places(
+                base_li,0,cities,False))
+
+    if len(modified_li) == 0:
+        print("No locations entered; location index not modified")
+    else:
+        Geostring.loc_index = modified_li
+        mod_places = [i 
+                      for i 
+                      in [cities,subcountries,countries]
+                      if i is not None]
+        print("Location index modified:",mod_places)
+      
+def restore_locations():
+    Geostring.loc_index = create_loc_index()
         
 class Geostring(object):
     loc_index = create_loc_index()
-    def __init__(self,geo_input='',re_sub='[^a-z]',delimiters=[',',';','\|','&',' and ','/','\\\\'],loc_index=''):
+    def __init__(self,
+                 geo_input='',
+                 re_sub='[^a-z]',
+                 delimiters=[',',
+                             ';',
+                             '\|',
+                             '&',
+                             ' and ',
+                             '/',
+                             '\\\\'],
+                 loc_index='',
+                 exact=False):
         self.geo_input = geo_input
         self.re_sub = re_sub
         self.delimiters = delimiters
+        self.exact = exact
         self.results = []
         if loc_index == '':
             self.loc_index = Geostring.loc_index
@@ -181,4 +343,8 @@ class Geostring(object):
             delimiters = '|'.join(delimiters)
             geo_input = re.sub(delimiters,',',geo_input)
             for s in geo_input.split(','):
-                self.results.append(get_geo_info(s,self.re_sub,self.loc_index))
+                self.results.append(
+                        get_geo_info(s,
+                                     self.re_sub,
+                                     self.loc_index,
+                                     self.exact))
