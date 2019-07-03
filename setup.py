@@ -2,7 +2,7 @@ from setuptools import setup
 setup(
   name = 'geostring',
   packages = ['geostring'], # this must be the same as the name above
-  version = '1.0.5',
+  version = '1.0.7',
   description = 'geostring',
   author = 'Deen Freelon',
   author_email = 'dfreelon@gmail.com',
