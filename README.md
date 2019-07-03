@@ -98,8 +98,8 @@ Aside from its input, ```Geostring``` objects possess the following parameters:
 Aside from its input, ```resolve``` possesses two additional parameters:
 
 - ```exact```: Boolean; toggles exact string matching mode (and accelerates execution considerably). ```False``` by default. Setting this to ```True``` will change ```max_tolerance``` to 0 regardless of what the user has entered for the latter.
-- ```max_tolerance```: The upper limit of the tolerance between the input string and its best match in the place name database. If the best match returns a tolerance equaling or exceeding this value, ```resolve``` will return ```None```.
-- ```verbose```: Displays additional info about your output.
+- ```max_tolerance```: The upper limit of the tolerance between the input string and its best match in the place name database. If the best match returns a tolerance equaling or exceeding this value, ```resolve``` will return ```None```. 0.25 by default.
+- ```verbose```: Boolean; displays additional info about your output. ```False``` by default.
 
 **Output**
 
