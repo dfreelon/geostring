@@ -7,7 +7,7 @@
 
 Before using ```geostring```, you should understand a few basic facts about how it works:
 
-- First, it performs **fuzzy dictionary matching of unstructured text to known geographic locations**. Upon execution, it seeks the best match for its input string within a built-in database of place names. Match quality is measured using a metric I call tolerance (technically the normalized edit distance/Levenshtein distance). A tolerance of 0 indicates an exact match, while a tolerance of 1 indicates that two strings have no characters in common. So lower is better. The default tolerance threshold is <0.25, which represents the difference between two four-character strings that differ by one letter, such as "lime" and "Lima."
+- First, it performs **fuzzy dictionary matching of unstructured text to known geographic locations**. Upon execution, it seeks the best match for its input string within a built-in database of place names. Match quality is measured using a metric I call tolerance (technically the normalized edit distance/Levenshtein distance). A tolerance of 0 indicates an exact match, while a tolerance of 1 indicates that two strings have no characters in common. So lower is better. The default tolerance threshold is <0.25, which represents the difference between two four-character strings that differ by one letter, such as "lime" and "Lima." It can also be run in "exact" mode, in which it will only retrieve exact string matches between the input text and the database. (This moves several orders of magnitude faster than the fuzzy matching.)
 - Second, **tolerance allows you to decide how good your matches have to be.** Setting a low tolerance threshold means all your matches will probably be right, but you may be missing some that didn't make the cut (Type II error). A high tolerance threshold is more permissive, letting through more false positives (Type I error). You may need to adjust based on the nature of your data.
 - Third, **when a string could refer to multiple locations, ```geostring``` returns all possible location candidates.** For example, since there are towns named "Oxford" in Alabama, Mississippi, Ohio, and England, its results for "Oxford" are:
 
@@ -56,6 +56,7 @@ geo.resolve('paraguay')
 geo.resolve('wakanda')
 geo.resolve('westeros')
 geo.resolve('narnia') #but some will return false positives based on similarity to real place names!
+geo.resolve('narnia',exact=True) #to force an exact string match and reduce false positives
 #compound locations
 geo.resolve('springfield, oh')
 geo.resolve('athens, greece')
@@ -90,12 +91,14 @@ Function and object details
 
 Aside from its input, ```Geostring``` objects possess the following parameters:
 - ```re_sub```: The regex pattern used to preprocess the input string. By default it is ```[^a-z]``` which removes all non-Latin letter characters, including spaces.
-- ```delimiters```: a list containing the delimiters used to preprocess the input string. By default it is ```[',',';','\|','&',' and ','/','\\\\']```
+- ```delimiters```: A list containing the delimiters used to preprocess the input string. By default it is ```[',',';','\|','&',' and ','/','\\\\']```
 - ```loc_index```: The location index used to match strings. This is generated automatically when ```geostring``` is imported.
+- ```exact```: Boolean; toggles exact string matching mode (and accelerates execution considerably). ```False``` by default.
 
 Aside from its input, ```resolve``` possesses two additional parameters:
 
-- ```max_tolerance```: The upper limit of the tolerance between the input string and its best match in the place name database. If the best match returns a tolerance equaling or exceeding this value, ```resolve``` will discard it.
+- ```exact```: Boolean; toggles exact string matching mode (and accelerates execution considerably). ```False``` by default. Setting this to ```True``` will change ```max_tolerance``` to 0 regardless of what the user has entered for the latter.
+- ```max_tolerance```: The upper limit of the tolerance between the input string and its best match in the place name database. If the best match returns a tolerance equaling or exceeding this value, ```resolve``` will return ```None```.
 - ```verbose```: Displays additional info about your output.
 
 **Output**
