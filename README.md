@@ -95,7 +95,7 @@ Aside from its input, ```Geostring``` objects possess the following parameters:
 - ```loc_index```: The location index used to match strings. This is generated automatically when ```geostring``` is imported.
 - ```exact```: Boolean; toggles exact string matching mode (and accelerates execution considerably). ```False``` by default.
 
-Aside from its input, ```resolve``` possesses two additional parameters:
+Aside from its input, ```resolve``` possesses three additional parameters:
 
 - ```exact```: Boolean; toggles exact string matching mode (and accelerates execution considerably). ```False``` by default. Setting this to ```True``` will change ```max_tolerance``` to 0 regardless of what the user has entered for the latter.
 - ```max_tolerance```: The upper limit of the tolerance between the input string and its best match in the place name database. If the best match returns a tolerance equaling or exceeding this value, ```resolve``` will return ```None```. 0.25 by default.
