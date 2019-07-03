@@ -41,30 +41,30 @@ Sample code
 ```python
 import geostring as geo
 #cities, including (some) nicknames
-geo.resolve('nyc')
-geo.resolve('omaha')
-geo.resolve('brussels')
+print(geo.resolve('nyc'))
+print(geo.resolve('omaha'))
+print(geo.resolve('brussels'))
 #subcountries
-geo.resolve('north carolina')
-geo.resolve('baja california')
-geo.resolve('queensland')
+print(geo.resolve('north carolina'))
+print(geo.resolve('baja california'))
+print(geo.resolve('queensland'))
 #countries
-geo.resolve('kenya')
-geo.resolve('mongolia')
-geo.resolve('paraguay')
+print(geo.resolve('kenya'))
+print(geo.resolve('mongolia'))
+print(geo.resolve('paraguay'))
 #fictional places don't work too well
-geo.resolve('wakanda')
-geo.resolve('westeros')
-geo.resolve('narnia') #but some will return false positives based on similarity to real place names!
-geo.resolve('narnia',exact=True) #to force an exact string match and reduce false positives
+print(geo.resolve('wakanda'))
+print(geo.resolve('westeros'))
+print(geo.resolve('narnia')) #but some will return false positives based on similarity to real place names!
+print(geo.resolve('narnia',exact=True)) #to force an exact string match and reduce false positives
 #compound locations
-geo.resolve('springfield, oh')
-geo.resolve('athens, greece')
-geo.resolve('san juan, pr')
+print(geo.resolve('springfield, oh'))
+print(geo.resolve('athens, greece'))
+print(geo.resolve('san juan, pr'))
 #and non-standard location references...
-geo.resolve('Brooklyn, baby!')
-geo.resolve('VA/MD')
-geo.resolve('southern California...') #doesn't work--see below
+print(geo.resolve('Brooklyn, baby!'))
+print(geo.resolve('VA/MD'))
+print(geo.resolve('southern California...')) #doesn't work--see below
 ```
 Delimiters
 ----------------------
